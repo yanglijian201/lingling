@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Excel Files</title>
+    <style>
+        .custom-file-input {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .custom-file-input input[type="file"] {
+            position: absolute;
+            top: 0;
+            right: 0;
+            margin: 0;
+            padding: 0;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0;
+            filter: alpha(opacity=0);
+        }
+
+        .custom-file-input button {
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .file-name {
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload Two Excel Files</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <div class="custom-file-input">
+            <button type="button">Large Excel</button>
+            <input type="file" name="large_excel" required>
+            <span class="file-name" id="large_excel-name">No file chosen</span>
+        </div>
+        <br><br>
+        <div class="custom-file-input">
+            <button type="button">Same Excel</button>
+            <input type="file" name="same_excel" required>
+            <span class="file-name" id="same_excel-name">No file chosen</span>
+        </div>
+        <br><br>
+        <button type="submit">Upload</button>
+    </form>
+    <div id="result" class="error"></div>
+
+    <script>
+        document.querySelectorAll('.custom-file-input input[type="file"]').forEach(function(input) {
+            const button = input.previousElementSibling;
+            const fileNameSpan = input.nextElementSibling;
+            button.addEventListener('click', function() {
+                input.click();
+            });
+            input.addEventListener('change', function() {
+                const file = input.files[0];
+                const fileName = file ? file.name : 'No file chosen';
+                fileNameSpan.textContent = fileName;
+
+                // Client-side file format validation
+                if (file && !file.name.match(/\.(xlsx|xls)$/)) {
+                    fileNameSpan.textContent += ' (Invalid format)';
+                    input.value = '';  // Clear the input
+                }
+            });
+        });
+
+        document.getElementById('uploadForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const largeExcel = document.querySelector('input[name="large_excel"]').files[0];
+            const sameExcel = document.querySelector('input[name="same_excel"]').files[0];
+            const resultDiv = document.getElementById('result');
+
+            // Client-side file format validation before submitting
+            if (!largeExcel || !sameExcel || !largeExcel.name.match(/\.(xlsx|xls)$/) || !sameExcel.name.match(/\.(xlsx|xls)$/)) {
+                resultDiv.textContent = 'Both files must be in Excel format (.xlsx or .xls).';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('large_excel', largeExcel);
+            formData.append('same_excel', sameExcel);
+
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'result.xlsx';  // or 'result.xls' based on the file type
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                resultDiv.innerText = 'File processed successfully!';
+            } else {
+                const errorData = await response.json();
+                resultDiv.innerText = `Error: ${errorData.error}`;
+            }
+        };
+    </script>
+</body>
+</html>

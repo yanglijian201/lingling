@@ -1,0 +1,9 @@
+Flask==1.1.4
+pandas==1.3.3
+Werkzeug==0.16.1
+Jinja2==2.11.3
+MarkupSafe==1.1.1
+openpyxl
+xlrd
+xlwt
+xlutils
