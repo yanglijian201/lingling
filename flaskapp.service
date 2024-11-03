@@ -1,0 +1,12 @@
+[Unit]
+Description=Gunicorn instance to serve Flaskapp
+After=network.target
+
+[Service]
+User=your-user
+Group=nginx
+WorkingDirectory=/home/demon/lingling
+Environment="PATH=/home/demon/lingling"
+ExecStart=/home/demon/lingling/app.py
+[Install]
+WantedBy=multi-user.target

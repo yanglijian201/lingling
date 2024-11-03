@@ -1,3 +1,4 @@
+#!/usr/bin/env python3.8
 from flask import Flask, request, send_file, render_template, jsonify, Response, session, make_response
 import os
 import copy
@@ -503,7 +504,6 @@ def upload_files():
             for idx, value in enumerate(summarized_data["三级公立医院"], 1):
                 style = get_xlwt_style(summary_book, summary_sheet, 5, 0)
                 ws.write(5, idx, value, style)
-
             for idx, value in enumerate(summarized_data["三级民营医院"], 1):
                 style = get_xlwt_style(summary_book, summary_sheet, 6, 0)
                 ws.write(6, idx, value, style)
