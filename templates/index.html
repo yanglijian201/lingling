@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload and Merge Excel Files</title>
+    <title>Upload and Summarize Excel Files</title>
     <style>
         .custom-file-input {
             position: relative;
@@ -64,12 +64,12 @@
         }
 
         .log .error {
-            color: red;
+            color: red.
         }
     </style>
 </head>
 <body>
-    <h1>Upload and Merge Excel Files</h1>
+    <h1>Upload and Summarize Excel Files</h1>
     <form id="uploadLargeForm" enctype="multipart/form-data">
         <div class="custom-file-input">
             <button type="button">Select Large Excel</button>
@@ -80,17 +80,17 @@
     <div id="largeResult" class="error"></div>
     <br><br>
 
-    <form id="uploadSmallForm" enctype="multipart/form-data">
+    <form id="uploadSummaryForm" enctype="multipart/form-data">
         <div class="custom-file-input">
-            <button type="button">Select Small Excel</button>
-            <input type="file" name="small_excel" id="small_excel" required>
-            <span class="file-name" id="small_excel-name">No file chosen</span>
+            <button type="button">Select Summary Excel</button>
+            <input type="file" name="summary_excel" id="summary_excel" required>
+            <span class="file-name" id="summary_excel-name">No file chosen</span>
         </div>
     </form>
-    <div id="smallResult" class="error"></div>
+    <div id="summaryResult" class="error"></div>
     <br><br>
 
-    <button id="uploadButton">Upload and Merge Excel</button>
+    <button id="uploadButton">Upload and Summarize Excel</button>
     <button id="stopButton">Stop Processing</button>
     <button id="clearLogsButton">Clear Logs</button>
     <div id="mergeResult" class="error"></div>
@@ -119,9 +119,9 @@
         document.getElementById('uploadButton').onclick = async function(event) {
             event.preventDefault();
             const largeExcelInput = document.getElementById('large_excel');
-            const smallExcelInput = document.getElementById('small_excel');
+            const summaryExcelInput = document.getElementById('summary_excel');
             const largeExcel = largeExcelInput.files[0];
-            const smallExcel = smallExcelInput.files[0];
+            const summaryExcel = summaryExcelInput.files[0];
             const mergeResultDiv = document.getElementById('mergeResult');
             const processingLogDiv = document.getElementById('processingLog');
 
@@ -134,15 +134,15 @@
                 return;
             }
 
-            if (!smallExcel) {
-                mergeResultDiv.textContent = 'Small Excel file must be chosen.';
+            if (!summaryExcel) {
+                mergeResultDiv.textContent = 'Summary Excel file must be chosen.';
                 mergeResultDiv.className = 'error';
                 return;
             }
 
             const formData = new FormData();
             formData.append('large_excel', largeExcel);
-            formData.append('small_excel', smallExcel);
+            formData.append('summary_excel', summaryExcel);
 
             try {
                 const response = await fetch('/upload', {
@@ -159,11 +159,11 @@
                     const a = document.createElement('a');
                     a.style.display = 'none';
                     a.href = url;
-                    a.download = largeExcel.name;  // Keep the same filename as the large Excel file
+                    a.download = summaryExcel.name;  // Use the same filename as the summary Excel file
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
-                    mergeResultDiv.innerText = 'Files merged successfully!';
+                    mergeResultDiv.innerText = 'Files summarized and updated successfully!';
                     mergeResultDiv.className = 'success';
                 } else {
                     const resultData = await response.json();
