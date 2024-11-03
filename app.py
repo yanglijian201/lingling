@@ -1,6 +1,9 @@
 #!/usr/bin/env python3.8
-from flask import Flask, request, send_file, render_template, jsonify, Response, session, make_response
 import os
+import sys
+# add /home/demon/.local/lib/python3.8/site-packages to the sys path
+sys.path.append("/home/demon/.local/lib/python3.8/site-packages")
+from flask import Flask, request, send_file, render_template, jsonify, Response, session, make_response
 import copy
 import traceback
 import openpyxl
