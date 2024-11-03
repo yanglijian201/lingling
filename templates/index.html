@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Excel Files</title>
+    <title>Upload and Merge Excel Files</title>
     <style>
         .custom-file-input {
             position: relative;
@@ -36,26 +36,65 @@
         .error {
             color: red;
         }
+
+        .warning {
+            color: orange;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .log {
+            white-space: pre-wrap;
+            background: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+            max-height: 50vh; /* Restrict log window size to half the viewport height */
+            overflow-y: auto; /* Add vertical scrollbar if content exceeds max height */
+        }
+
+        .log .info {
+            color: green;
+        }
+
+        .log .warning {
+            color: orange;
+        }
+
+        .log .error {
+            color: red;
+        }
     </style>
 </head>
 <body>
-    <h1>Upload Two Excel Files</h1>
-    <form id="uploadForm" enctype="multipart/form-data">
+    <h1>Upload and Merge Excel Files</h1>
+    <form id="uploadLargeForm" enctype="multipart/form-data">
         <div class="custom-file-input">
-            <button type="button">Large Excel</button>
-            <input type="file" name="large_excel" required>
+            <button type="button">Select Large Excel</button>
+            <input type="file" name="large_excel" id="large_excel" required>
             <span class="file-name" id="large_excel-name">No file chosen</span>
         </div>
-        <br><br>
-        <div class="custom-file-input">
-            <button type="button">Same Excel</button>
-            <input type="file" name="same_excel" required>
-            <span class="file-name" id="same_excel-name">No file chosen</span>
-        </div>
-        <br><br>
-        <button type="submit">Upload</button>
     </form>
-    <div id="result" class="error"></div>
+    <div id="largeResult" class="error"></div>
+    <br><br>
+
+    <form id="uploadSmallForm" enctype="multipart/form-data">
+        <div class="custom-file-input">
+            <button type="button">Select Small Excel</button>
+            <input type="file" name="small_excel" id="small_excel" required>
+            <span class="file-name" id="small_excel-name">No file chosen</span>
+        </div>
+    </form>
+    <div id="smallResult" class="error"></div>
+    <br><br>
+
+    <button id="uploadButton">Upload and Merge Excel</button>
+    <button id="stopButton">Stop Processing</button>
+    <button id="clearLogsButton">Clear Logs</button>
+    <div id="mergeResult" class="error"></div>
+    <div id="processingLog" class="log"></div>
 
     <script>
         document.querySelectorAll('.custom-file-input input[type="file"]').forEach(function(input) {
@@ -77,42 +116,132 @@
             });
         });
 
-        document.getElementById('uploadForm').onsubmit = async function(event) {
+        document.getElementById('uploadButton').onclick = async function(event) {
             event.preventDefault();
-            const largeExcel = document.querySelector('input[name="large_excel"]').files[0];
-            const sameExcel = document.querySelector('input[name="same_excel"]').files[0];
-            const resultDiv = document.getElementById('result');
+            const largeExcelInput = document.getElementById('large_excel');
+            const smallExcelInput = document.getElementById('small_excel');
+            const largeExcel = largeExcelInput.files[0];
+            const smallExcel = smallExcelInput.files[0];
+            const mergeResultDiv = document.getElementById('mergeResult');
+            const processingLogDiv = document.getElementById('processingLog');
 
-            // Client-side file format validation before submitting
-            if (!largeExcel || !sameExcel || !largeExcel.name.match(/\.(xlsx|xls)$/) || !sameExcel.name.match(/\.(xlsx|xls)$/)) {
-                resultDiv.textContent = 'Both files must be in Excel format (.xlsx or .xls).';
+            // Clear log display
+            processingLogDiv.innerHTML = '';
+
+            if (!largeExcel) {
+                mergeResultDiv.textContent = 'Large Excel file must be chosen.';
+                mergeResultDiv.className = 'error';
+                return;
+            }
+
+            if (!smallExcel) {
+                mergeResultDiv.textContent = 'Small Excel file must be chosen.';
+                mergeResultDiv.className = 'error';
                 return;
             }
 
             const formData = new FormData();
             formData.append('large_excel', largeExcel);
-            formData.append('same_excel', sameExcel);
+            formData.append('small_excel', smallExcel);
 
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
 
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = 'result.xlsx';  // or 'result.xls' based on the file type
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                resultDiv.innerText = 'File processed successfully!';
-            } else {
-                const errorData = await response.json();
-                resultDiv.innerText = `Error: ${errorData.error}`;
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = largeExcel.name;  // Keep the same filename as the large Excel file
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    mergeResultDiv.innerText = 'Files merged successfully!';
+                    mergeResultDiv.className = 'success';
+                } else {
+                    const resultData = await response.json();
+                    mergeResultDiv.innerText = `Error: ${resultData.error}`;
+                    mergeResultDiv.className = 'error';
+                }
+            } catch (error) {
+                mergeResultDiv.innerText = `Error: ${error.message}`;
+                mergeResultDiv.className = 'error';
             }
+        };
+
+        document.getElementById('stopButton').onclick = async function(event) {
+            event.preventDefault();
+            try {
+                const response = await fetch('/stop', {
+                    method: 'POST',
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+
+                if (response.ok) {
+                    const resultData = await response.json();
+                    const mergeResultDiv = document.getElementById('mergeResult');
+                    mergeResultDiv.innerText = resultData.message;
+                    mergeResultDiv.className = 'error';
+                }
+            } catch (error) {
+                const mergeResultDiv = document.getElementById('mergeResult');
+                mergeResultDiv.innerText = `Error: ${error.message}`;
+                mergeResultDiv.className = 'error';
+            }
+        };
+
+        document.getElementById('clearLogsButton').onclick = async function(event) {
+            event.preventDefault();
+            try {
+                const response = await fetch('/clear_logs', {
+                    method: 'POST',
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+
+                if (response.ok) {
+                    const resultData = await response.json();
+                    const processingLogDiv = document.getElementById('processingLog');
+                    const mergeResultDiv = document.getElementById('mergeResult');
+                    processingLogDiv.innerHTML = '';  // Clear log display on the frontend
+                    mergeResultDiv.innerHTML = '';  // Clear error messages on the frontend
+                    console.log(resultData.message);
+                }
+            } catch (error) {
+                console.error('Error clearing logs:', error);
+            }
+        };
+
+        // Set up Server-Sent Events (SSE) to receive log updates
+        const evtSource = new EventSource('/logs');
+        evtSource.onmessage = function(event) {
+            const logLines = event.data.split('\n');
+            const processingLogDiv = document.getElementById('processingLog');
+            logLines.forEach(line => {
+                if (line.trim() === "") return;
+                const logLineElement = document.createElement('div');
+                if (line.includes('ERROR')) {
+                    logLineElement.className = 'error';
+                } else if (line.includes('WARNING')) {
+                    logLineElement.className = 'warning';
+                } else {
+                    logLineElement.className = 'info';
+                }
+                logLineElement.textContent = line;
+                processingLogDiv.appendChild(logLineElement);
+            });
+            // Scroll to the bottom of the log container
+            processingLogDiv.scrollTop = processingLogDiv.scrollHeight;
         };
     </script>
 </body>
