@@ -407,6 +407,7 @@ def get_xlwt_style(xlrd_book, xlrd_sheet, row, col):
     xlwt_font.escapement = font.escapement
     xlwt_font.underline = font.underline_type
     xlwt_font.family = font.family  # Preserve font family
+    xlwt_font.name = font.name  # Preserve font family
     xlwt_font.charset = font.character_set
 
     # Create an xlwt borders
